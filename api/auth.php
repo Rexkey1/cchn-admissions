@@ -3,68 +3,48 @@
 require_once __DIR__ . '/cors.php';
 require_once __DIR__ . '/../config/db.php';
 
-$action = $_GET['action'] ?? $_POST['action'] ?? 'check';
+$action = $_GET['action'] ?? '';
 
-// GET /api/auth.php?action=check
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'check') {
-    if (!empty($_SESSION['user'])) {
-        send_json(['ok' => true, 'user' => $_SESSION['user']]);
-    } else {
-        send_json(['ok' => false, 'error' => 'Not logged in'], 401);
+if ($action === 'check') {
+    if (isset($_SESSION['user_id'])) {
+        send_json(['ok' => true, 'user' => [
+            'id' => $_SESSION['user_id'],
+            'username' => $_SESSION['username'],
+            'name' => $_SESSION['full_name'],
+            'role' => $_SESSION['role']
+        ]]);
     }
+    send_json(['ok' => false], 401);
 }
 
-// POST /api/auth.php?action=login
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'login') {
-    $body = get_body();
-    $username = trim($body['username'] ?? '');
-    $password = $body['password'] ?? '';
+if ($action === 'login') {
+    $b = get_body();
+    $u = $b['username'] ?? '';
+    $p = $b['password'] ?? '';
 
-    if ($username === '' || $password === '') {
-        send_json(['ok' => false, 'error' => 'Username and password are required.'], 422);
+    $st = $mysqli->prepare("SELECT id, username, password, full_name, role FROM users WHERE username = ?");
+    $st->bind_param('s', $u);
+    $st->execute();
+    $res = $st->get_result();
+    $user = $res->fetch_assoc();
+
+    if ($user && password_verify($p, $user['password'])) {
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['full_name'] = $user['full_name'];
+        $_SESSION['role'] = $user['role'];
+
+        send_json(['ok' => true, 'user' => [
+            'id' => $user['id'],
+            'username' => $user['username'],
+            'name' => $user['full_name'],
+            'role' => $user['role']
+        ]]);
     }
-
-    $sql = "SELECT id, full_name, username, phone_number, password, role FROM users WHERE username=? LIMIT 1";
-    $stmt = $mysqli->prepare($sql);
-    if (!$stmt) send_json(['ok' => false, 'error' => 'DB error: ' . $mysqli->error], 500);
-
-    $stmt->bind_param('s', $username);
-    $stmt->execute();
-    $row = null;
-
-    if (function_exists('mysqli_stmt_get_result')) {
-        $res = $stmt->get_result();
-        if ($res) $row = $res->fetch_assoc();
-    } else {
-        $stmt->store_result();
-        if ($stmt->num_rows > 0) {
-            $stmt->bind_result($id, $full, $user, $phone, $hash, $role);
-            $stmt->fetch();
-            $row = ['id' => $id, 'full_name' => $full, 'username' => $user, 'phone_number' => $phone, 'password' => $hash, 'role' => $role];
-        }
-    }
-    $stmt->close();
-
-    if ($row && password_verify($password, $row['password'])) {
-        session_regenerate_id(true);
-        $_SESSION['user'] = [
-            'id'       => $row['id'],
-            'name'     => $row['full_name'],
-            'username' => $row['username'],
-            'role'     => $row['role'],
-            'phone'    => $row['phone_number'],
-        ];
-        send_json(['ok' => true, 'user' => $_SESSION['user']]);
-    } else {
-        send_json(['ok' => false, 'error' => 'Invalid username or password.'], 401);
-    }
+    send_json(['ok' => false, 'error' => 'Invalid credentials'], 401);
 }
 
-// POST /api/auth.php?action=logout
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'logout') {
-    $_SESSION = [];
+if ($action === 'logout') {
     session_destroy();
     send_json(['ok' => true]);
 }
-
-send_json(['ok' => false, 'error' => 'Invalid request'], 400);
