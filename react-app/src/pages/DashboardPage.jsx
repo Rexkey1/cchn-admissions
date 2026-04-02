@@ -1,98 +1,91 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { getDashboard } from '../api/client'
+import { useState, useEffect } from 'react';
+import { getDashboardStats } from '../api/client';
+import { NavLink } from 'react-router-dom';
 
-function StatCard({ label, value, sub, color, icon }) {
-  return (
-    <div className="card" style={{ padding:'1.5rem', position:'relative', overflow:'hidden', cursor:'default' }}>
-      <div style={{ position:'absolute', top:-8, right:-8, opacity:0.08 }}>{icon}</div>
-      <p style={{ fontSize:11, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.08em', color, marginBottom:4 }}>{label}</p>
-      <p style={{ fontSize:42, fontWeight:900, color:'#0f172a', letterSpacing:'-1px', lineHeight:1 }}>{value?.toLocaleString() ?? 0}</p>
-      {sub && <p style={{ fontSize:12, color:'#64748b', marginTop:6, fontWeight:500 }}>{sub}</p>}
-    </div>
-  )
-}
-
-function ProgressBar({ label, value, total, color }) {
-  const pct = total > 0 ? Math.round((value / total) * 100) : 0
-  return (
-    <div style={{ marginBottom:'1rem' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4, fontSize:13, fontWeight:600 }}>
-        <span style={{ color:'#475569' }}>{label}</span>
-        <span style={{ color }}>{value?.toLocaleString()} <span style={{ color:'#94a3b8', fontWeight:400 }}>({pct}%)</span></span>
-      </div>
-      <div style={{ height:8, background:'#f1f5f9', borderRadius:99, overflow:'hidden' }}>
-        <div style={{ width:`${pct}%`, height:'100%', background:color, borderRadius:99, transition:'width 1s ease' }} />
-      </div>
-    </div>
-  )
-}
+const STAT_CARDS = [
+  { label: 'Total Applicants', key: 'total', icon: '👥', color: '#4f46e5', bg: '#f5f3ff' },
+  { label: 'Shortlisted', key: 'shortlisted', icon: '📌', color: '#7c3aed', bg: '#fdf4ff' },
+  { label: 'Verified', key: 'verified', icon: '✅', color: '#059669', bg: '#f0fdf4' },
+  { label: 'Payments', key: 'paid', icon: '💳', color: '#2563eb', bg: '#eff6ff' },
+];
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState(null);
+  const [recent, setRecent] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getDashboard().then(r => setStats(r.data)).finally(() => setLoading(false))
-  }, [])
+    getDashboardStats().then(res => {
+      setStats(res.data.stats);
+      setRecent(res.data.recent);
+    }).finally(() => setLoading(false));
+  }, []);
 
-  if (loading) return <div style={{ display:'flex', justifyContent:'center', padding:'4rem' }}><div className="spinner" /></div>
-  if (!stats) return null
-
-  const s = stats.stats
+  if (loading) return <div style={{ display:'flex', justifyContent:'center', padding:'4rem' }}><div className="spinner" /></div>;
 
   return (
     <div className="animate-fadeIn">
-      {/* Header */}
-      <div style={{ marginBottom:'2rem', display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:'1rem' }}>
-        <div>
-          <h1 style={{ fontSize:32, fontWeight:900, letterSpacing:'-0.8px' }} className="gradient-text">Overview</h1>
-          <p style={{ color:'#64748b', marginTop:4, fontWeight:500 }}>Real-time application statistics and metrics.</p>
-        </div>
-        <Link to="/applicants" style={{
-          display:'inline-flex', alignItems:'center', gap:'0.5rem',
-          background:'#fff', border:'1px solid var(--color-border)', color:'#374151',
-          padding:'0.6rem 1.25rem', borderRadius:12, fontSize:13, fontWeight:600,
-          boxShadow:'var(--shadow-sm)', transition:'all 0.2s',
-        }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15"><path d="M12 4v16m8-8H4"/></svg>
-          Manage Applicants
-        </Link>
-      </div>
+      <header style={{ marginBottom: '2.5rem' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-0.75px' }} className="gradient-text">Overview Dashboard</h1>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', fontWeight: 500, marginTop: '0.25rem' }}>Track real-time admission metrics and recent activity.</p>
+      </header>
 
-      {/* Stat cards */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:'1.25rem', marginBottom:'2rem' }}>
-        <StatCard label="Total Applicants" value={s.total} color="#4f46e5"
-          icon={<svg viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="1.5" width="80" height="80"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>} />
-        <StatCard label="Diploma" value={s.total_dip} color="#0284c7"
-          sub={`${s.total > 0 ? Math.round(s.total_dip/s.total*100) : 0}% of total`}
-          icon={<svg viewBox="0 0 24 24" fill="none" stroke="#0284c7" strokeWidth="1.5" width="80" height="80"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} />
-        <StatCard label="Certificate" value={s.total_cert} color="#7c3aed"
-          sub={`${s.total > 0 ? Math.round(s.total_cert/s.total*100) : 0}% of total`}
-          icon={<svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.5" width="80" height="80"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>} />
-        {stats.hasPaid && <StatCard label="Paid" value={s.paid_total} color="#059669"
-          sub={`${s.total > 0 ? Math.round(s.paid_total/s.total*100) : 0}% of total`}
-          icon={<svg viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="1.5" width="80" height="80"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />}
-      </div>
-
-      {/* Progress section */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))', gap:'1.25rem' }}>
-        <div className="card" style={{ padding:'1.5rem' }}>
-          <h3 style={{ fontWeight:800, fontSize:15, marginBottom:'1.25rem', color:'#0f172a' }}>Shortlisted Progress</h3>
-          <ProgressBar label="Total Shortlisted" value={s.sl_total} total={s.total} color="linear-gradient(90deg,#10b981,#059669)" />
-          <ProgressBar label="Diploma" value={s.sl_dip} total={s.total_dip} color="linear-gradient(90deg,#38bdf8,#0284c7)" />
-          <ProgressBar label="Certificate" value={s.sl_cert} total={s.total_cert} color="linear-gradient(90deg,#a78bfa,#7c3aed)" />
-        </div>
-
-        {stats.hasVerified && (
-          <div className="card" style={{ padding:'1.5rem' }}>
-            <h3 style={{ fontWeight:800, fontSize:15, marginBottom:'1.25rem', color:'#0f172a' }}>Verified Progress</h3>
-            <ProgressBar label="Total Verified" value={s.v_total} total={s.total} color="linear-gradient(90deg,#34d399,#059669)" />
-            <ProgressBar label="Diploma" value={s.v_dip} total={s.total_dip} color="linear-gradient(90deg,#38bdf8,#0284c7)" />
-            <ProgressBar label="Certificate" value={s.v_cert} total={s.total_cert} color="linear-gradient(90deg,#a78bfa,#7c3aed)" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+        {STAT_CARDS.map(card => (
+          <div key={card.key} className="card card-interactive" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{card.icon}</div>
+            <div style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-1px' }}>{stats?.[card.key]?.toLocaleString() || 0}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{card.label}</div>
+            {/* Background design */}
+            <div style={{ position: 'absolute', right: -20, bottom: -20, fontSize: 100, opacity: 0.03 }}>{card.icon}</div>
           </div>
-        )}
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+        {/* Recent Activity */}
+        <section className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 style={{ fontSize: 16, fontWeight: 800 }}>Recent Applicants</h2>
+            <NavLink to="/applicants" style={{ fontSize: 13, fontWeight: 700, color: '#4f46e5', textDecoration: 'none' }}>View All →</NavLink>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc' }}>
+                  <th style={{ textAlign: 'left', padding: '0.875rem 1.75rem', fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Applicant</th>
+                  <th style={{ textAlign: 'left', padding: '0.875rem 1.75rem', fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Program</th>
+                  <th style={{ textAlign: 'left', padding: '0.875rem 1.75rem', fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map(r => (
+                  <tr key={r.id} style={{ borderTop: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '1rem 1.75rem', fontWeight: 700, fontSize: 14 }}>{r.full_name}</td>
+                    <td style={{ padding: '1rem 1.75rem' }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 6, background: r.program === 'Diploma' ? '#eef2ff' : '#fdf4ff', color: r.program === 'Diploma' ? '#4f46e5' : '#7c3aed' }}>{r.program}</span>
+                    </td>
+                    <td style={{ padding: '1rem 1.75rem', color: '#64748b', fontSize: 12 }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Rapid Actions */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="card" style={{ background: '#1e293b', color: 'white', border: 'none' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: '0.5rem' }}>Quick Actions</h3>
+            <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: '1.25rem' }}>Frequently used management tools.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <NavLink to="/upload" className="btn btn-primary" style={{ justifyContent: 'flex-start', background: '#334155' }}>📤 Import Applicants</NavLink>
+              <NavLink to="/interview-dates" className="btn btn-primary" style={{ justifyContent: 'flex-start', background: '#334155' }}>📅 Interview Schedule</NavLink>
+              <NavLink to="/admitted" className="btn btn-primary" style={{ justifyContent: 'flex-start', background: '#334155' }}>✨ Daily Admissions</NavLink>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  )
+  );
 }
