@@ -57,9 +57,6 @@ if ($method === 'GET' && $action === 'detail') {
         for ($i=0;$i<3;$i++) { $params[] = "%$q%"; $types .= 's'; }
     }
 
-    $total = (int)$mysqli->query("SELECT COUNT(*) FROM applicants$where" .
-        ($params ? " -- parameterized" : ""))->fetch_row()[0];
-    // Re-run with correct params
     $stc = $mysqli->prepare("SELECT COUNT(*) FROM applicants$where");
     if ($params) $stc->bind_param($types, ...$params);
     $stc->execute(); $stc->bind_result($total); $stc->fetch(); $stc->close();
