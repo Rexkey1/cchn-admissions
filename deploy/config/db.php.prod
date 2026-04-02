@@ -1,0 +1,13 @@
+<?php
+// deploy/config/db.php.prod - Copy this to db.php on your server
+define('DB_HOST', 'localhost');
+define('DB_USER', 'cpanel_user_here');
+define('DB_PASS', 'your_secure_password_here');
+define('DB_NAME', 'cpanel_database_name_here');
+
+try {
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+    $mysqli->set_charset("utf8mb4");
+} catch (mysqli_sql_exception $e) {
+    die("Database Connection Failed: " . $e->getMessage());
+}

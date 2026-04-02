@@ -1,0 +1,19 @@
+# React dependencies
+react-app/node_modules/
+react-app/dist/
+
+# Env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Tools
+.gemini/
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

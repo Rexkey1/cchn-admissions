@@ -1,0 +1,24 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  
+  # Forward /api requests to the api folder
+  RewriteRule ^api/(.*)$ api/$1 [L]
+
+  # If the requested file or directory exists, serve it
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Otherwise, send everything to index.html for React Router
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Security: Disable directory listing
+Options -Indexes
+
+# PHP production settings
+<IfModule php_module>
+   php_flag display_errors Off
+   php_value max_execution_time 30
+</IfModule>
