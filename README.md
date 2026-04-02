@@ -1,11 +1,15 @@
-# CCHN Admissions Modernized Portal
+# CCHN Admissions Management System
 
-This is a modernized version of the CCHN Admissions system, transitioning from a PHP monolith to a React SPA with a PHP REST API.
+A modern React-based admissions management system for CCHN, replacing the legacy PHP monolith.
 
 ## Tech Stack
-- Frontend: React (Vite)
-- Backend: PHP REST API
-- Database: MySQL
+- **Frontend**: React (Vite), Tailwind-inspired CSS
+- **Backend**: PHP REST API
+- **Database**: MySQL
 
-## Integration
-The frontend is built with React and communicates with the PHP backend via an API layer located in `/api`.
+## Setup
+1. Clone the repository.
+2. Configure your database in `config/db.php`.
+3. Run migrations in `migrations/`.
+4. Start your PHP server (e.g., XAMPP Apache).
+5. Run `npm install` and `npm run dev` in the `react-app` folder.
