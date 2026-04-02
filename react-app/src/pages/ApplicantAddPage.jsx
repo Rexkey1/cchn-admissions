@@ -2,77 +2,46 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createApplicant } from '../api/client'
 
-const FIELD = (label, name, type='text', placeholder='', required=false, opts=null) =>
-  ({ label, name, type, placeholder, required, opts })
-
-const FIELDS = [
-  FIELD('Full Name *', 'full_name', 'text', 'e.g. John Doe', true),
-  FIELD('Phone Number *', 'phone_number', 'text', 'e.g. 054xxxxxxx', true),
-  FIELD('Program *', 'program', 'select', '', true, ['Diploma','Certificate']),
-  FIELD('PIN / MOH', 'pin_moh', 'text', 'Optional'),
-  FIELD('Source', 'source', 'text', 'e.g. Facebook, Referral'),
-]
-
 export default function ApplicantAddPage() {
   const [form, setForm] = useState({full_name:'',phone_number:'',program:'',pin_moh:'',source:''})
-  const [errors, setErrors] = useState([])
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
   async function submit(e) {
-    e.preventDefault(); setErrors([])
+    e.preventDefault()
     setLoading(true)
-    try {
-      await createApplicant(form)
-      navigate('/applicants')
-    } catch(err) {
-      const msg = err.response?.data?.error
-      setErrors([msg || 'Failed to save.'])
-    } finally { setLoading(false) }
+    try { await createApplicant(form); navigate('/applicants') }
+    catch(err) { alert('Failed to save applicant.') }
+    finally { setLoading(false) }
   }
+
+  const fields = [
+    { label:'Full Name *', name:'full_name', type:'text', req:true },
+    { label:'Phone Number *', name:'phone_number', type:'text', req:true },
+    { label:'Program *', name:'program', type:'select', req:true, opts:['Diploma','Certificate'] },
+    { label:'PIN / MOH', name:'pin_moh', type:'text' },
+    { label:'Source', name:'source', type:'text' },
+  ]
 
   return (
     <div className="animate-fadeIn" style={{ maxWidth:640, margin:'0 auto' }}>
-      <div style={{ marginBottom:'1.5rem', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-        <div>
-          <h1 style={{ fontSize:24, fontWeight:900, letterSpacing:'-0.5px' }} className="gradient-text">Add Applicant</h1>
-          <p style={{ fontSize:13, color:'#64748b', marginTop:2 }}>Register a new applicant in the system.</p>
-        </div>
-        <button onClick={() => navigate(-1)} style={{ fontSize:13, fontWeight:600, color:'#4f46e5', background:'none' }}>← Back</button>
-      </div>
-
-      {errors.length > 0 && (
-        <div style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:12, padding:'0.875rem 1.25rem', marginBottom:'1.25rem' }}>
-          {errors.map((e, i) => <p key={i} style={{ fontSize:13, color:'#dc2626', fontWeight:600 }}>• {e}</p>)}
-        </div>
-      )}
-
-      <div className="card" style={{ padding:'2rem' }}>
-        <form onSubmit={submit} style={{ display:'grid', gap:'1.25rem' }}>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1.25rem' }}>
-            {FIELDS.map(f => (
-              <div key={f.name} style={{ gridColumn: f.type === 'text' && f.name === 'full_name' ? 'span 2' : undefined }}>
-                <label style={{ display:'block', fontSize:13, fontWeight:600, color:'#374151', marginBottom:6 }}>
-                  {f.label}
-                </label>
-                {f.opts ? (
-                  <select value={form[f.name]} onChange={e => setForm(p => ({...p,[f.name]:e.target.value}))} required={f.required} style={{ width:'100%', padding:'0.6rem 0.75rem', border:'1.5px solid var(--color-border)', borderRadius:10, fontSize:13, background:'#f8fafc', outline:'none', fontFamily:'inherit' }}>
-                    <option value="">Select Program</option>
-                    {f.opts.map(o => <option key={o}>{o}</option>)}
-                  </select>
-                ) : (
-                  <input type={f.type} value={form[f.name]} onChange={e => setForm(p => ({...p,[f.name]:e.target.value}))} placeholder={f.placeholder} required={f.required} style={{ width:'100%', padding:'0.6rem 0.75rem', border:'1.5px solid var(--color-border)', borderRadius:10, fontSize:13, background:'#f8fafc', outline:'none', fontFamily:'inherit' }} />
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div style={{ display:'flex', gap:'0.75rem', justifyContent:'flex-end', marginTop:4 }}>
-            <button type="button" onClick={() => navigate(-1)} style={{ padding:'0.6rem 1.5rem', border:'1.5px solid var(--color-border)', borderRadius:10, fontSize:13, fontWeight:600, color:'#475569', background:'#fff' }}>Cancel</button>
-            <button type="submit" disabled={loading} style={{ padding:'0.6rem 1.75rem', background:'linear-gradient(135deg,#4f46e5,#7c3aed)', color:'#fff', borderRadius:10, fontSize:13, fontWeight:700, opacity: loading ? 0.7 : 1 }}>
-              {loading ? 'Saving…' : 'Save Applicant'}
-            </button>
-          </div>
+      <h1 style={{ fontWeight:900, marginBottom:20 }} className="gradient-text">Add Applicant</h1>
+      <div className="card">
+        <form onSubmit={submit} style={{ display:'grid', gap:16 }}>
+          {fields.map(f => (
+            <div key={f.name}>
+              <label style={{ display:'block', fontSize:13, fontWeight:600, marginBottom:4 }}>{f.label}</label>
+              {f.opts ? (
+                <select value={form[f.name]} onChange={e=>setForm(p=>({...p,[f.name]:e.target.value}))} required={f.req} style={{ width:'100%', padding:10, borderRadius:8, border:'1.5px solid var(--color-border)' }}>
+                  <option value="">Select...</option>
+                  {f.opts.map(o=><option key={o}>{o}</option>)}
+                </select>
+              ) : (
+                <input type={f.type} value={form[f.name]} onChange={e=>setForm(p=>({...p,[f.name]:e.target.value}))} required={f.req} style={{ width:'100%', padding:10, borderRadius:8, border:'1.5px solid var(--color-border)' }} />
+              )}
+            </div>
+          ))}
+          <button type="submit" disabled={loading} className="btn btn-primary">{loading ? 'Saving...' : 'Save Applicant'}</button>
         </form>
       </div>
     </div>

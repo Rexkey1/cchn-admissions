@@ -119,11 +119,9 @@ export default function SourcesPage() {
                     </div>
                     <div style={{ fontSize:32, fontWeight:900, color:'#0f172a', letterSpacing:'-0.5px', lineHeight:1 }}>{Number(g.total).toLocaleString()}</div>
                   </div>
-                  {/* Progress bar */}
                   <div style={{ height:5, background:'#e2e8f0', borderRadius:99, marginBottom:'0.875rem', overflow:'hidden' }}>
                     <div style={{ width:`${pct}%`, height:'100%', background:accent, borderRadius:99 }} />
                   </div>
-                  {/* Mini stats */}
                   <div style={{ display:'flex', gap:'0.5rem', flexWrap:'wrap' }}>
                     <span style={{ fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:5, background:'#e0f2fe', color:'#0369a1' }}>Dip: {g.diploma}</span>
                     <span style={{ fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:5, background:'#f3e8ff', color:'#7e22ce' }}>Cert: {g.certificate}</span>
@@ -140,11 +138,10 @@ export default function SourcesPage() {
       {/* ── Detail view: applicants for a source ── */}
       {selectedSource && (
         <>
-          {/* Search filter */}
           <div className="card" style={{ padding:'0.75rem', display:'flex', gap:'0.75rem', marginBottom:'1.25rem', flexWrap:'wrap' }}>
             <div style={{ position:'relative', flex:2, minWidth:160 }}>
               <svg style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'#94a3b8' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="15" height="15"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search name, phone, PIN…" style={{ width:'100%', paddingLeft:36, paddingRight:12, paddingTop:9, paddingBottom:9, border:'1.5px solid var(--color-border)', borderRadius:10, fontSize:13, background:'#f8fafc', outline:'none', fontFamily:'inherit' }} />
+              <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search applicants..." style={{ width:'100%', paddingLeft:36, paddingRight:12, paddingTop:9, paddingBottom:9, border:'1.5px solid var(--color-border)', borderRadius:10, fontSize:13, background:'#f8fafc', outline:'none', fontFamily:'inherit' }} />
             </div>
             <select value={prog} onChange={e=>setProg(e.target.value)} style={{ flex:1, minWidth:130, padding:'0.55rem 0.75rem', border:'1.5px solid var(--color-border)', borderRadius:10, fontSize:13, background:'#f8fafc', outline:'none', fontFamily:'inherit', fontWeight:600 }}>
               <option value="">All Programs</option>
@@ -155,45 +152,37 @@ export default function SourcesPage() {
           </div>
 
           <div className="card" style={{ padding:0, overflow:'hidden', position:'relative' }}>
-            {detailLoading && <div style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(4px)', zIndex:10, display:'flex', alignItems:'center', justifyContent:'center' }}><div className="spinner" /></div>}
+            {detailLoading && <div style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.7)', zIndex:10, display:'flex', alignItems:'center', justifyContent:'center' }}><div className="spinner" /></div>}
             <div style={{ overflowX:'auto' }}>
               <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
-                <thead>
-                  <tr style={{ background:'#f8fafc' }}>
-                    {['#','Applicant','Program','Phone','Interview Date','Status'].map(h => (
-                      <th key={h} style={{ padding:'0.875rem 1rem', textAlign:'left', fontSize:10, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.07em', color:'#94a3b8', whiteSpace:'nowrap' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
+                <thead><tr style={{ background:'#f8fafc' }}>
+                  {['#','Applicant','Program','Phone','Interview Date','Status'].map(h => (
+                    <th key={h} style={{ padding:'0.875rem 1rem', textAlign:'left', fontSize:10, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.07em', color:'#94a3b8' }}>{h}</th>
+                  ))}
+                </tr></thead>
                 <tbody>
-                  {!detailLoading && rows.length === 0 && <tr><td colSpan={6} style={{ textAlign:'center', padding:'3rem', color:'#94a3b8', fontWeight:700 }}>No applicants found.</td></tr>}
                   {rows.map((r, i) => (
                     <tr key={r.id} style={{ borderTop:'1px solid #f1f5f9' }}>
-                      <td style={{ padding:'0.875rem 1rem', color:'#94a3b8', fontSize:12 }}>{(pagination.page-1)*25+i+1}</td>
+                      <td style={{ padding:'0.875rem 1rem', color:'#94a3b8' }}>{(pagination.page-1)*25+i+1}</td>
                       <td style={{ padding:'0.875rem 1rem' }}>
                         <div style={{ fontWeight:700, color:'#0f172a' }}>{r.full_name}</div>
-                        <div style={{ fontSize:11, color:'#94a3b8', fontFamily:'monospace', marginTop:2 }}>{r.pin_moh||''}</div>
+                        <div style={{ fontSize:11, color:'#94a3b8', fontFamily:'monospace' }}>{r.pin_moh||''}</div>
                       </td>
                       <td style={{ padding:'0.875rem 1rem' }}>
                         {PROG_BADGE[r.program] && <span style={{ fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:6, background:PROG_BADGE[r.program].bg, color:PROG_BADGE[r.program].color }}>{r.program}</span>}
                       </td>
-                      <td style={{ padding:'0.875rem 1rem', color:'#475569', fontFamily:'monospace', fontSize:12 }}>{r.phone_number}</td>
-                      <td style={{ padding:'0.875rem 1rem', color:'#475569', fontSize:12 }}>
-                        {r.interview_date
-                          ? new Date(r.interview_date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
-                          : <span style={{ color:'#cbd5e1' }}>Not scheduled</span>}
-                      </td>
+                      <td style={{ padding:'0.875rem 1rem' }}>{r.phone_number}</td>
+                      <td style={{ padding:'0.875rem 1rem' }}>{r.interview_date || '—'}</td>
                       <td style={{ padding:'0.875rem 1rem' }}>
-                        {r.is_shortlisted==1 && <span style={{ fontSize:10, fontWeight:700, padding:'2px 6px', borderRadius:4, background:'#fef9c3', color:'#92400e', marginRight:3 }}>Short</span>}
-                        {r.is_verified==1   && <span style={{ fontSize:10, fontWeight:700, padding:'2px 6px', borderRadius:4, background:'#dcfce7', color:'#166534', marginRight:3 }}>Verified</span>}
-                        {r.is_paid==1       && <span style={{ fontSize:10, fontWeight:700, padding:'2px 6px', borderRadius:4, background:'#dbeafe', color:'#1e40af' }}>Paid</span>}
+                        {r.is_shortlisted==1 && <span title="Short" style={{ width:6, height:6, borderRadius:'50%', background:'#a855f7', display:'inline-block', marginRight:4 }}/>}
+                        {r.is_verified==1   && <span title="Verified" style={{ width:6, height:6, borderRadius:'50%', background:'#10b981', display:'inline-block', marginRight:4 }}/>}
+                        {r.is_paid==1       && <span title="Paid" style={{ width:6, height:6, borderRadius:'50%', background:'#3b82f6', display:'inline-block', marginRight:4 }}/>}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {/* Pagination */}
             <div style={{ padding:'0.875rem 1.25rem', borderTop:'1px solid #f1f5f9', display:'flex', alignItems:'center', justifyContent:'space-between', background:'#f8fafc' }}>
               <span style={{ fontSize:12, fontWeight:600, color:'#64748b' }}>Page {pagination.page} of {pagination.pages}</span>
               <div style={{ display:'flex', gap:8 }}>
