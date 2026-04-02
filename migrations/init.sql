@@ -1,25 +1,23 @@
 -- migrations/init.sql
-CREATE DATABASE IF NOT EXISTS school_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE school_db;
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `full_name` varchar(100) NOT NULL,
+  `role` enum('admin','staff','manager') DEFAULT 'staff',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  full_name VARCHAR(120) NOT NULL,
-  username VARCHAR(60) NOT NULL UNIQUE,
-  phone_number VARCHAR(30) NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  role ENUM('admin','manager') NOT NULL DEFAULT 'manager',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS applicants (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  pin_moh VARCHAR(60) NULL,
-  full_name VARCHAR(160) NOT NULL,
-  contact_number VARCHAR(30) NOT NULL,
-  program ENUM('Diploma','Certificate') NOT NULL,
-  phone_number VARCHAR(30) NOT NULL,
-  source VARCHAR(120) NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY unique_applicant (full_name, phone_number)
-) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS `applicants` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `pin_moh` varchar(50) DEFAULT NULL,
+  `full_name` varchar(100) NOT NULL,
+  `program` enum('Diploma','Certificate') NOT NULL,
+  `phone_number` varchar(20) NOT NULL,
+  `source` varchar(100) DEFAULT NULL,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `phone_number` (`phone_number`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
