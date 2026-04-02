@@ -180,7 +180,7 @@ export default function BulkSchedulePage() {
             <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>Preview <span style={{ color: '#64748b', fontWeight: 500 }}>(first {preview.rows.length} rows)</span></span>
             <span style={{ fontSize: 11, background: '#f0fdf4', color: '#166534', fontWeight: 700, padding: '2px 8px', borderRadius: 6, border: '1px solid #bbf7d0' }}>✓ Columns OK</span>
           </div>
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX:'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ background: '#f8fafc' }}>
@@ -224,7 +224,7 @@ export default function BulkSchedulePage() {
             ].map(({ label, val, color, bg }) => (
               <div key={label} style={{ background: bg, borderRadius: 10, padding: '0.875rem', textAlign: 'center' }}>
                 <div style={{ fontSize: 30, fontWeight: 900, color }}>{val ?? 0}</div>
-                <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#6b7280', marginTop: 2 }}>{label}</div>
+                <div style={{ fontSize: 10, fontWeight: 800, textTransform:'uppercase', letterSpacing: '0.07em', color: '#6b7280', marginTop: 2 }}>{label}</div>
               </div>
             ))}
           </div>
