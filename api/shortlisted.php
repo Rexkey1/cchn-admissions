@@ -1,37 +1,55 @@
 <?php
-// api/shortlisted.php
 require_once __DIR__ . '/cors.php';
-require_once __DIR__ . '/../config/db.php';
 require_auth();
 
-$q    = trim($_GET['q'] ?? '');
-$prog = trim($_GET['program'] ?? '');
-$page = max(1, intval($_GET['page'] ?? 1));
-$per  = max(1, intval($_GET['per'] ?? 25));
-$offs = ($page - 1) * $per;
+$method = $_SERVER['REQUEST_METHOD'];
 
-$where = " WHERE is_shortlisted=1"; $params = []; $types = '';
-if (in_array($prog, ['Diploma','Certificate'], true)) {
-    $where .= " AND program=?"; $params[] = $prog; $types .= 's';
+if ($method === 'GET') {
+    $q = $_GET['q'] ?? '';
+    $program = $_GET['program'] ?? '';
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $limit = 25;
+    $offset = ($page - 1) * $limit;
+
+    $where = ["is_shortlisted = 1"];
+    $params = [];
+    $types = "";
+
+    if ($q) {
+        $where[] = "(full_name LIKE ? OR phone_number LIKE ? OR pin_moh LIKE ?)";
+        $search = "%$q%";
+        $params[] = $search; $params[] = $search; $params[] = $search;
+        $types .= "sss";
+    }
+    if ($program) {
+        $where[] = "program = ?";
+        $params[] = $program;
+        $types .= "s";
+    }
+
+    $where_sql = implode(" AND ", $where);
+    
+    // Count
+    $count_stmt = $db->prepare("SELECT COUNT(*) FROM applicants WHERE $where_sql");
+    if ($types) $count_stmt->bind_param($types, ...$params);
+    $count_stmt->execute();
+    $total = $count_stmt->get_result()->fetch_row()[0];
+
+    // Rows
+    $stmt = $db->prepare("SELECT * FROM applicants WHERE $where_sql ORDER BY full_name ASC LIMIT ? OFFSET ?");
+    $types .= "ii";
+    $params[] = $limit;
+    $params[] = $offset;
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    send_json([
+        'rows' => $rows,
+        'pagination' => [
+            'page' => $page,
+            'pages' => ceil($total / $limit),
+            'total' => $total
+        ]
+    ]);
 }
-if ($q !== '') {
-    $where .= " AND (full_name LIKE ? OR pin_moh LIKE ? OR phone_number LIKE ? OR source LIKE ?)";
-    for ($i = 0; $i < 4; $i++) { $params[] = "%$q%"; $types .= 's'; }
-}
-
-$stc = $mysqli->prepare("SELECT COUNT(*) FROM applicants$where");
-if ($params) $stc->bind_param($types, ...$params);
-$stc->execute(); $stc->bind_result($total); $stc->fetch(); $stc->close();
-
-$sql = "SELECT id, pin_moh, full_name, program, phone_number, source, created_at
-        FROM applicants$where ORDER BY created_at DESC LIMIT ? OFFSET ?";
-$st = $mysqli->prepare($sql);
-$t2 = $types . 'ii'; $p2 = array_merge($params, [$per, $offs]);
-$st->bind_param($t2, ...$p2); $st->execute();
-$rows = []; $res = $st->get_result();
-while ($r = $res->fetch_assoc()) $rows[] = $r;
-$st->close();
-
-send_json(['ok' => true, 'rows' => $rows,
-    'pagination' => ['page' => $page, 'per' => $per, 'total' => (int)$total,
-                     'pages' => (int)ceil($total / $per)]]);

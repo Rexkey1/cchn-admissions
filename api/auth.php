@@ -1,50 +1,56 @@
 <?php
-// api/auth.php
 require_once __DIR__ . '/cors.php';
-require_once __DIR__ . '/../config/db.php';
 
-$action = $_GET['action'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $username = $data['username'] ?? '';
+    $password = $data['password'] ?? '';
 
-if ($action === 'check') {
-    if (isset($_SESSION['user_id'])) {
-        send_json(['ok' => true, 'user' => [
-            'id' => $_SESSION['user_id'],
-            'username' => $_SESSION['username'],
-            'name' => $_SESSION['full_name'],
-            'role' => $_SESSION['role']
-        ]]);
+    if (!$username || !$password) {
+        send_json(['error' => 'Username and password required'], 400);
     }
-    send_json(['ok' => false], 401);
-}
 
-if ($action === 'login') {
-    $b = get_body();
-    $u = $b['username'] ?? '';
-    $p = $b['password'] ?? '';
+    $stmt = $db->prepare("SELECT id, username, password, full_name, role FROM users WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc();
 
-    $st = $mysqli->prepare("SELECT id, username, password, full_name, role FROM users WHERE username = ?");
-    $st->bind_param('s', $u);
-    $st->execute();
-    $res = $st->get_result();
-    $user = $res->fetch_assoc();
-
-    if ($user && password_verify($p, $user['password'])) {
+    if ($user && password_verify($password, $user['password'])) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['full_name'] = $user['full_name'];
         $_SESSION['role'] = $user['role'];
-
-        send_json(['ok' => true, 'user' => [
-            'id' => $user['id'],
-            'username' => $user['username'],
-            'name' => $user['full_name'],
-            'role' => $user['role']
-        ]]);
+        
+        send_json([
+            'message' => 'Login successful',
+            'user' => [
+                'id' => $user['id'],
+                'username' => $user['username'],
+                'full_name' => $user['full_name'],
+                'role' => $user['role']
+            ]
+        ]);
+    } else {
+        send_json(['error' => 'Invalid credentials'], 401);
     }
-    send_json(['ok' => false, 'error' => 'Invalid credentials'], 401);
 }
 
-if ($action === 'logout') {
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if (isset($_SESSION['user_id'])) {
+        send_json([
+            'user' => [
+                'id' => $_SESSION['user_id'],
+                'username' => $_SESSION['username'],
+                'full_name' => $_SESSION['full_name'],
+                'role' => $_SESSION['role']
+            ]
+        ]);
+    } else {
+        send_json(['user' => null]);
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     session_destroy();
-    send_json(['ok' => true]);
+    send_json(['message' => 'Logged out']);
 }
